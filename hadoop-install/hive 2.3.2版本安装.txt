@@ -1,0 +1,134 @@
+hive 2.3.2版本安装
+/**
+*hive组件需要依赖于Hadoop集群，可以是伪分布式，或完全分布式，Hadoop集群自行安装
+*
+/
+1.获取hive安装包
+  hive.apache.org  //这里是apache基金委员会的hive组件
+  $ tar -zxvf apache-hive-2.3.2-bin.tar.gz -C /usr/local
+2.配置hive的环境变量
+  $ whoami
+  hadoop
+  $ vim ~/.bashrc
+  export HIVE_HOME=/usr/local/apache-hive-2.3.2-bin
+  export $PATH=$PATH:HIVE_HOME/bin
+  $ source ~/.bashrc
+ 3.配置hive-site.xml文件
+  3.1 创建连接MySQL数据库的用户名和密码
+   $ mysql -u root -p
+   >create database hive;
+   >grant all privileges on hive.* to 'hive'@'%' with grant option; //%可以替换成相对应的IP地址
+   > flush privileges;
+  <!--这里使用的是远程的MySQL元数据库，安装MySQL自行百度-->
+ 3.2 修改配置文件
+  $ $ cp hive-default.xml.template hive-site.xml //这里的配置选项过多，可以直接新建一个hive-site.xml文件
+  /*hive有多种配置方式可以服务端和客户端在一台服务器上，也可以有多台服务器端和多台客户端，主要作用是冗余
+  */
+  3.2.1 服务端客户端在一台服务器上配置
+  $ vim conf/hive-site.xml
+  <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+  <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+  <configuration>
+	<property>  
+	  <name>hive.metastore.warehouse.dir</name>  
+	  <value>/user/hive/warehouse</value>  
+	</property> 
+	<property>
+		<name>javax.jdo.option.ConnectionURL</name>
+		<value>jdbc:mysql://192.178.240.128:3307/hive</value>
+		<description>JDBC connect string for mysql JDBC</description>
+	</property>
+	<property>
+	        <name>javax.jdo.option.ConnectionDriverName</name>
+	        <value>com.mysql.jdbc.Driver</value>
+	        <description>mysql JDBC driver</description>
+	</property>
+	<property>
+	        <name>javax.jdo.option.ConnectionUserName</name>
+	        <value>hive</value>
+	        <description>mysql username</description>
+	</property>
+	<property>
+	        <name>javax.jdo.option.ConnectionPassword</name>
+	        <value>hive123</value>
+	        <description>mysql password</description>
+	</property>
+	<property>  
+	  <name>hive.metastore.uris</name>  
+	  <value>thrift://192.178.1.188:9083</value>  
+	</property> 
+	</configuration>
+	3.2.2 服务端和客户端分开配置
+	<!--配置服务端-->
+	<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+  <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+  <configuration>
+	<property>  
+	  <name>hive.metastore.warehouse.dir</name>  
+	  <value>/user/hive/warehouse</value>  
+	</property> 
+	<property>
+		<name>javax.jdo.option.ConnectionURL</name>
+		<value>jdbc:mysql://192.178.240.128:3307/hive</value>
+		<description>JDBC connect string for mysql JDBC</description>
+	</property>
+	<property>
+	        <name>javax.jdo.option.ConnectionDriverName</name>
+	        <value>com.mysql.jdbc.Driver</value>
+	        <description>mysql JDBC driver</description>
+	</property>
+	<property>
+	        <name>javax.jdo.option.ConnectionUserName</name>
+	        <value>hive</value>
+	        <description>mysql username</description>
+	</property>
+	<property>
+	        <name>javax.jdo.option.ConnectionPassword</name>
+	        <value>hive123</value>
+	        <description>mysql password</description>
+	</property>
+	</configuration>
+	<!--配置客户端-->
+	<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+	<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+	<configuration>
+	<property>
+		<name>hive.metastore.warehouse.dir</name>
+		<value>/usr/local/hive</value>
+	</property>
+	<property>
+		<name>hive.metastore.local</name>
+		<value>false</value>
+	</property>
+	<property>
+	        <name>hive.metastore.uris</name> 
+	        <value>thrift://192.178.240.133:9083</value> //这里可以配置多个服务端，metastore服务
+	</property>
+	</configuration>
+  4.下载MySQL连接jar包
+    mysql-connector-java-5.1.44-bin.jar
+    4.1拷贝到lib目录
+    $ cp mysql-connector-java-5.1.44-bin.jar /usr/local/apache-hive-2.3.2-bin/lib/
+  5.初始化Hive在mysql里的脚本
+   $ schematool -initSchema -dbType mysql
+  6.启动服务端
+   $ nohup hive --service metastore &
+   6.1客户端测试
+   $ hive
+   >show tables;
+  7.测试配置文件通过交互式hive方式
+   7.1在hive交互式下创建一张表，并插入数据
+   /**
+   *最新的hive使用的时候需要使用ssl的方式连接数据库，会有一个安全警告，测试可以忽略，生产环境严格按照要求
+   **/
+   $ hive
+   > create table test(ID INT,USERNAME STRING);
+   > insert into test values(1,'wang'),(2,'nice');
+   7.2 连接MySQL数据库
+   <!--在MySQL数据库中查看hive创建的数据表-->
+   $ mysql -uhive -phive123
+   > show databses;
+   > use hive;
+   > show tables;
+   > select * from TBLS\G
+   > select * from COLUMNS_V2\G
