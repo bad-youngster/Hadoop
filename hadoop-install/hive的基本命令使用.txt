@@ -1,0 +1,22 @@
+create table t2
+(tid int,
+tname string,
+age int
+)
+location '/user/hive/warehouse/t2';
+
+load data local inpath '/home/hadoop/student01.txt' into table t4;
+
+
+#创建表的时候如果使用load data的方式导入数据，需要指明分隔符
+create table t4 (tid int,tname string,age int)
+row format delimited fields terminated by ',' ;
+
+#导入一个目录下的所有表数据，同时覆盖已经存在的数据
+load data local inpath '/home/hadoop/'  overwrite into table t4;
+#将hdfs里的数据表导入到hive数据仓库中,'/input/student01.txt' 这里是hdfs的路径
+load data local inpath '/input/student01.txt'  into table t4;
+#同样导入目录也是一样的方法
+load data local inpath '/input/student01.txt'  overwrite into table t4;
+#导入数据到分区表里,
+load data local inpath '/root/students01.txt' into table partition_table partition (gender="partition_name");
