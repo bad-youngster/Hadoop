@@ -3,7 +3,7 @@ create table t2
 tname string,
 age int
 )
-location '/user/hive/warehouse/t2';
+location '/user/hive/warehouse/t2';#指定表创建在hdfs的目录位置
 
 load data local inpath '/home/hadoop/student01.txt' into table t4;
 

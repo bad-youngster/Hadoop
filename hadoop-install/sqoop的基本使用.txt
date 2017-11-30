@@ -1,0 +1,21 @@
+#sqoop
+$ sudo tar -zxvf sqoop-1.4.6.bin__hadoop-0.23.tar.gz -C /usr/local/
+$ pwd
+/usr/local/sqoop-1.4.6.bin__hadoop-0.23
+$ cd conf/
+$ sudo cp sqoop-env-template.sh sqoop-env.sh
+$ sudo vi sqoop-env.sh
+export HADOOP_COMMON_HOME=/usr/local/hadoop-2.7.4/
+export HADOOP_MAPRED_HOME=/usr/local/hadoop-2.7.4/
+#sqoop 导入Oracle数据库到HDFS中
+$ sqoop import --connect jdbc:oracle:thin:@192.168.240.137:1521:orcl --username scott --password tiger --table emp --columns 'empno,ename,job,sal,deptno' -m 1 --target-dir '/sqoop/emp'
+#sqoop 导入Oracle到hive中
+$ sqoop import --hive-import --connect jdbc:oracle:thin:@192.168.240.137:1521:orcl --username scott --password tiger --table emp -m 1 --columns 'empno,ename,job,sal,deptno' 
+#导入Oracle，并指明表名
+$ sqoop import --hive-import --connect jdbc:oracle:thin:@192.168.240.137:1521:orcl --username scott --password tiger --table emp -m 1 --columns 'empno,ename,job,sal,deptno' --hive-table emp1
+#导入Oracle，指定whare条件
+$ sqoop import --hive-import --connect jdbc:oracle:thin:@192.168.240.137:1521:orcl --username scott --password tiger --table emp  -m 1 --columns 'empno,ename,job,sal,deptno' --hive-table emp2 where 'deptno=10'
+#导入Oracle，使用select
+$ sqoop import --hive-import --connect jdbc:oracle:thin:@192.168.240.137:1521:orcl --username scott --password tiger -m 1 --query 'select * from emp where sal < 1000 and $CONDITIONS' --target-dir '/sqoop/emp3' --hive-table emp3
+
+$ sqoop import --hive-import --connect jdbc:oracle:thin:@192.168.240.137:1521:orcl --username scott --password tiger -m 1 --table myemp --export-dir '/sqoop/emp3'
